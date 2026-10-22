@@ -97,6 +97,7 @@ class MainActivity : Activity() {
         }
         appCard.addView(search, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(8); bottomMargin = dp(8) })
         appCard.addView(appList, LinearLayout.LayoutParams(-1, ViewGroup.LayoutParams.WRAP_CONTENT))
+        renderAppChecks(appList)
         val allRow = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         actionButton(allRow, "Select all") { saveSelection(apps.map { it.first }.toSet()); renderAppChecks(appList) }
         actionButton(allRow, "Clear") { saveSelection(emptySet()); renderAppChecks(appList) }
@@ -169,8 +170,8 @@ class MainActivity : Activity() {
             enabled.contains(packageName)
         } catch (_: Exception) { false }
         val overlayEnabled = Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(this)
-        statusText.text = "Notification access: " + if (listenerEnabled) "ON" else "OFF" +
-            "\nAnimated cue permission: " + if (overlayEnabled) "ON" else "OFF" +
+        statusText.text = "Notification access: " + (if (listenerEnabled) "ON" else "OFF") +
+            "\nAnimated cue permission: " + (if (overlayEnabled) "ON" else "OFF") +
             "\nSelected apps: " + (prefs.getStringSet("selected_apps", emptySet())?.size ?: 0)
         val history = try { JSONArray(prefs.getString("recent_events", "[]") ?: "[]") } catch (_: Exception) { JSONArray() }
         val lines = mutableListOf<String>()
@@ -200,10 +201,11 @@ class MainActivity : Activity() {
     }
 
     private fun actionButton(parent: LinearLayout, label: String, action: () -> Unit) {
+        val horizontal = parent.orientation == LinearLayout.HORIZONTAL
         parent.addView(Button(this).apply {
             text = label; isAllCaps = false; textSize = 14f; setTextColor(-1)
             background = rounded(accent, 14); setOnClickListener { action() }
-        }, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(5); bottomMargin = dp(5) })
+        }, LinearLayout.LayoutParams(if (horizontal) 0 else -1, dp(48), if (horizontal) 1f else 0f).apply { topMargin = dp(5); bottomMargin = dp(5); if (horizontal) marginEnd = dp(6) })
     }
 
     private fun rounded(color: Int, radius: Int) = GradientDrawable().apply {
