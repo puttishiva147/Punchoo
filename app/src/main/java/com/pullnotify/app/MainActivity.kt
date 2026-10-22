@@ -87,7 +87,7 @@ class MainActivity : Activity() {
         addText(appCard, "YOUR APPS", 12f, accent, true)
         addText(appCard, "Choose which apps can trigger a cue.", 13f, muted, false)
         val search = EditText(this).apply {
-            hint = "Search installed apps"; textSize = 14f; singleLine = true
+            hint = "Search installed apps"; textSize = 14f; setSingleLine(true)
             setPadding(dp(12), dp(4), dp(12), dp(4)); background = rounded(0xFFFFFFFF.toInt(), 12)
             addTextChangedListener(object : android.text.TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
