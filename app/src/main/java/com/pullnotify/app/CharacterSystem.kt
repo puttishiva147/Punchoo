@@ -309,6 +309,7 @@ class CharacterRendererView(
 
     fun dispose() {
         closed = true
-        animate().cancel()\n        invalidate()
+        animate().cancel()
+        invalidate()
     }
 }
