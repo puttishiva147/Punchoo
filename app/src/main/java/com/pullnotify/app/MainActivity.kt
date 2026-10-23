@@ -151,7 +151,7 @@ class MainActivity : Activity() {
             })
         }
         appCard.addView(search, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(8); bottomMargin = dp(8) })
-        appCard.addView(appList, LinearLayout.LayoutParams(-1, ViewGroup.LayoutParams.WRAP_CONTENT))
+        (appList.parent as? ViewGroup)?.removeView(appList)\n        appCard.addView(appList, LinearLayout.LayoutParams(-1, ViewGroup.LayoutParams.WRAP_CONTENT))
         renderAppChecks(appList)
         val allRow = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         actionButton(allRow, "Select all") { saveSelection(apps.map { it.first }.toSet()); renderAppChecks(appList) }
