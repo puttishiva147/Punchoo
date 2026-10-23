@@ -211,7 +211,9 @@ class CharacterRendererView(
         val handY = floor - dp(103f - lean * .65f) * u
         val handLX = shoulderX + dp(22f) * u
         val handRX = shoulderX + dp(37f) * u
-        val ropeX = min(w * .48f, w * .47f)
+        val cutout = if (android.os.Build.VERSION.SDK_INT >= 28) rootWindowInsets?.displayCutout?.boundingRects?.firstOrNull() else null
+        // Align the rope with the physical camera cutout when Android exposes it.
+        val ropeX = cutout?.centerX()?.toFloat()?.coerceIn(dp(24f), w-dp(24f)) ?: (w * .5f)
         val cardW = min(dp(194f), w * .48f)
         val cardH = dp(57f)
         val cardX = min(w - cardW - dp(8f), w * .49f)
@@ -242,7 +244,7 @@ class CharacterRendererView(
         p.color = Color.rgb(151, 115, 139); p.style = Paint.Style.STROKE
         p.strokeWidth = dp(if (state == PullState.PULL || state == PullState.STRUGGLE) 2.7f else 1.7f)
         val rope = Path().apply {
-            moveTo(ropeX, dp(7f))
+            moveTo(ropeX, if (cutout != null) cutout.bottom.toFloat() + dp(2f) else dp(7f))
             val curve = if (state == PullState.PULL || state == PullState.STRUGGLE) dp(2f) else dp(11f)
             cubicTo(ropeX + curve, dp(34f), handLX - dp(4f), handY - dp(28f), handLX, handY)
         }
@@ -276,6 +278,7 @@ class CharacterRendererView(
         c.drawRoundRect(RectF(sx-dp(18f)*u, bodyTop, sx+dp(18f)*u, bodyBottom), dp(13f)*u, dp(13f)*u, p)
         p.color = Color.argb(35, 70, 40, 60)
         c.drawOval(RectF(sx-dp(13f)*u, bodyTop+dp(4f)*u, sx+dp(13f)*u, bodyTop+dp(12f)*u), p)
+        drawOutfitDetails(c, sx, bodyTop, bodyBottom, u, state, t)
 
         // Head squash/stretch and tilt change with the exertion instead of rigidly sliding.
         val headW = dp(27f)*u
@@ -285,6 +288,7 @@ class CharacterRendererView(
         p.color = skin
         c.drawOval(RectF(hx-headW, hy-headH, hx+headW, hy+headH), p)
         drawEars(c, hx, hy, u)
+        drawUniqueSilhouette(c, hx, hy, u, t)
         drawHairHat(c, hx, hy, u)
         val blink = (t % 3100L) < 135L
         p.color = ink
@@ -335,6 +339,186 @@ class CharacterRendererView(
         c.drawLine(h1-dp(2f)*u, handY-dp(1f)*u, h1+dp(2f)*u, handY+dp(1f)*u, p)
         c.drawLine(h2-dp(2f)*u, handY-dp(1f)*u, h2+dp(2f)*u, handY+dp(1f)*u, p)
         drawShoes(c, x, floor, u, state, t)
+    }
+
+
+    /** Character-specific silhouettes: ears, horns, petals, snouts, wings, fins and food/creature shapes. */
+    private fun drawUniqueSilhouette(c: Canvas, x: Float, y: Float, u: Float, t: Long) {
+        fun oval(color: Int, l: Float, top: Float, r: Float, bottom: Float) {
+            p.color = color; c.drawOval(RectF(l, top, r, bottom), p)
+        }
+        fun triangle(color: Int, x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float) {
+            p.color = color
+            val path = Path().apply { moveTo(x1,y1); lineTo(x2,y2); lineTo(x3,y3); close() }
+            c.drawPath(path,p)
+        }
+        val fur = when (characterId) {
+            "panda" -> Color.WHITE
+            "redpanda" -> Color.rgb(220,117,73)
+            "tiger" -> Color.rgb(255,160,65)
+            "lion" -> Color.rgb(234,154,57)
+            "frog" -> Color.rgb(122,203,112)
+            "axolotl" -> Color.rgb(255,155,190)
+            "unicorn" -> Color.rgb(255,230,245)
+            else -> shirt
+        }
+        when (characterId) {
+            "cat", "tiger", "fox", "redpanda", "raccoon" -> {
+                triangle(fur,x-dp(22f)*u,y-dp(11f)*u,x-dp(19f)*u,y-dp(31f)*u,x-dp(5f)*u,y-dp(18f)*u)
+                triangle(fur,x+dp(22f)*u,y-dp(11f)*u,x+dp(19f)*u,y-dp(31f)*u,x+dp(5f)*u,y-dp(18f)*u)
+                if (characterId == "fox" || characterId == "redpanda") {
+                    triangle(Color.WHITE,x-dp(12f)*u,y+dp(1f)*u,x,y+dp(15f)*u,x+dp(12f)*u,y+dp(1f)*u)
+                }
+                if (characterId == "tiger") {
+                    p.color=ink; p.strokeWidth=dp(2f)*u
+                    c.drawLine(x-dp(17f)*u,y-dp(5f)*u,x-dp(12f)*u,y+dp(1f)*u,p)
+                    c.drawLine(x+dp(17f)*u,y-dp(5f)*u,x+dp(12f)*u,y+dp(1f)*u,p)
+                }
+            }
+            "bunny", "deer" -> {
+                oval(fur,x-dp(19f)*u,y-dp(43f)*u,x-dp(8f)*u,y-dp(12f)*u)
+                oval(fur,x+dp(8f)*u,y-dp(43f)*u,x+dp(19f)*u,y-dp(12f)*u)
+                oval(Color.rgb(255,151,180),x-dp(16f)*u,y-dp(37f)*u,x-dp(11f)*u,y-dp(17f)*u)
+                oval(Color.rgb(255,151,180),x+dp(11f)*u,y-dp(37f)*u,x+dp(16f)*u,y-dp(17f)*u)
+                if (characterId == "deer") {
+                    p.color=Color.rgb(145,98,67); p.strokeWidth=dp(2f)*u
+                    c.drawLine(x-dp(9f)*u,y-dp(22f)*u,x-dp(15f)*u,y-dp(35f)*u,p)
+                    c.drawLine(x-dp(15f)*u,y-dp(35f)*u,x-dp(20f)*u,y-dp(34f)*u,p)
+                    c.drawLine(x+dp(9f)*u,y-dp(22f)*u,x+dp(15f)*u,y-dp(35f)*u,p)
+                    c.drawLine(x+dp(15f)*u,y-dp(35f)*u,x+dp(20f)*u,y-dp(34f)*u,p)
+                }
+            }
+            "bear", "panda", "koala", "puppy" -> {
+                oval(fur,x-dp(29f)*u,y-dp(26f)*u,x-dp(12f)*u,y-dp(9f)*u)
+                oval(fur,x+dp(12f)*u,y-dp(26f)*u,x+dp(29f)*u,y-dp(9f)*u)
+                if (characterId == "panda" || characterId == "koala") {
+                    oval(ink,x-dp(25f)*u,y-dp(22f)*u,x-dp(15f)*u,y-dp(12f)*u)
+                    oval(ink,x+dp(15f)*u,y-dp(22f)*u,x+dp(25f)*u,y-dp(12f)*u)
+                }
+                if (characterId == "puppy") oval(Color.rgb(150,91,70),x+dp(12f)*u,y-dp(10f)*u,x+dp(25f)*u,y+dp(12f)*u)
+            }
+            "frog" -> {
+                oval(fur,x-dp(22f)*u,y-dp(29f)*u,x-dp(4f)*u,y-dp(10f)*u)
+                oval(fur,x+dp(4f)*u,y-dp(29f)*u,x+dp(22f)*u,y-dp(10f)*u)
+                oval(Color.WHITE,x-dp(18f)*u,y-dp(25f)*u,x-dp(8f)*u,y-dp(14f)*u)
+                oval(Color.WHITE,x+dp(8f)*u,y-dp(25f)*u,x+dp(18f)*u,y-dp(14f)*u)
+            }
+            "dragon", "devil" -> {
+                triangle(Color.rgb(101,195,132),x-dp(20f)*u,y-dp(14f)*u,x-dp(17f)*u,y-dp(35f)*u,x-dp(5f)*u,y-dp(18f)*u)
+                triangle(Color.rgb(101,195,132),x+dp(20f)*u,y-dp(14f)*u,x+dp(17f)*u,y-dp(35f)*u,x+dp(5f)*u,y-dp(18f)*u)
+                if (characterId == "dragon") {
+                    oval(Color.rgb(101,195,132),x-dp(30f)*u,y-dp(2f)*u,x-dp(20f)*u,y+dp(14f)*u)
+                    oval(Color.rgb(101,195,132),x+dp(20f)*u,y-dp(2f)*u,x+dp(30f)*u,y+dp(14f)*u)
+                }
+            }
+            "bee", "butterfly", "fairy", "angel", "phoenix" -> {
+                val wing = if (characterId == "bee") Color.rgb(255,237,156) else Color.rgb(220,228,255)
+                oval(wing,x-dp(35f)*u,y-dp(12f)*u,x-dp(17f)*u,y+dp(10f)*u)
+                oval(wing,x+dp(17f)*u,y-dp(12f)*u,x+dp(35f)*u,y+dp(10f)*u)
+                if (characterId == "butterfly") {
+                    oval(Color.rgb(255,173,202),x-dp(34f)*u,y-dp(18f)*u,x-dp(19f)*u,y-dp(2f)*u)
+                    oval(Color.rgb(255,173,202),x+dp(19f)*u,y-dp(18f)*u,x+dp(34f)*u,y-dp(2f)*u)
+                }
+            }
+            "flower", "strawberry", "peach", "blueberry" -> {
+                val petal = if (characterId == "flower") Color.rgb(255,209,96) else Color.rgb(88,165,92)
+                if (characterId == "flower") {
+                    for (i in 0..5) {
+                        val a=i*Math.PI/3.0
+                        oval(petal,x+dp((kotlin.math.cos(a)*13).toFloat())*u-dp(7f)*u,y+dp((kotlin.math.sin(a)*13).toFloat())*u-dp(7f)*u,
+                            x+dp((kotlin.math.cos(a)*13).toFloat())*u+dp(7f)*u,y+dp((kotlin.math.sin(a)*13).toFloat())*u+dp(7f)*u)
+                    }
+                    oval(Color.rgb(255,145,174),x-dp(8f)*u,y-dp(8f)*u,x+dp(8f)*u,y+dp(8f)*u)
+                } else {
+                    oval(petal,x-dp(10f)*u,y-dp(32f)*u,x-dp(1f)*u,y-dp(21f)*u)
+                    oval(petal,x+dp(1f)*u,y-dp(34f)*u,x+dp(10f)*u,y-dp(21f)*u)
+                }
+            }
+            "unicorn" -> triangle(Color.WHITE,x-dp(6f)*u,y-dp(20f)*u,x,y-dp(39f)*u,x+dp(6f)*u,y-dp(20f)*u)
+            "axolotl" -> {
+                for (side in listOf(-1f,1f)) for (i in 0..2) {
+                    oval(Color.rgb(255,133,177),x+dp(side*(19f+i*3f))*u-dp(4f)*u,y+dp((-10f+i*8f))*u-dp(4f)*u,
+                        x+dp(side*(19f+i*3f))*u+dp(4f)*u,y+dp((-10f+i*8f))*u+dp(4f)*u)
+                }
+            }
+            "astronaut", "space" -> {
+                p.color=Color.WHITE; p.style=Paint.Style.STROKE; p.strokeWidth=dp(3f)*u
+                c.drawOval(RectF(x-dp(29f)*u,y-dp(31f)*u,x+dp(29f)*u,y+dp(28f)*u),p); p.style=Paint.Style.FILL
+                oval(Color.rgb(115,190,227),x-dp(18f)*u,y-dp(15f)*u,x+dp(18f)*u,y+dp(7f)*u)
+            }
+            "mermaid", "ocean" -> {
+                p.color=Color.rgb(85,201,191); p.strokeWidth=dp(3f)*u
+                c.drawArc(RectF(x-dp(27f)*u,y-dp(33f)*u,x+dp(27f)*u,y+dp(20f)*u),190f,160f,false,p)
+                triangle(Color.rgb(90,197,190),x-dp(17f)*u,y+dp(12f)*u,x-dp(26f)*u,y+dp(25f)*u,x-dp(9f)*u,y+dp(20f)*u)
+                triangle(Color.rgb(90,197,190),x+dp(17f)*u,y+dp(12f)*u,x+dp(26f)*u,y+dp(25f)*u,x+dp(9f)*u,y+dp(20f)*u)
+            }
+            "cookie", "jelly", "marshmallow", "cupcake" -> {
+                if (characterId == "cupcake") {
+                    triangle(Color.rgb(255,151,181),x-dp(20f)*u,y-dp(12f)*u,x,y-dp(36f)*u,x+dp(20f)*u,y-dp(12f)*u)
+                    oval(Color.rgb(255,215,110),x-dp(4f)*u,y-dp(40f)*u,x+dp(4f)*u,y-dp(32f)*u)
+                } else if (characterId == "cookie") {
+                    oval(Color.rgb(255,225,160),x-dp(22f)*u,y-dp(12f)*u,x-dp(17f)*u,y-dp(7f)*u)
+                    oval(Color.rgb(255,225,160),x+dp(15f)*u,y+dp(7f)*u,x+dp(21f)*u,y+dp(13f)*u)
+                } else if (characterId == "marshmallow") {
+                    p.color=Color.WHITE; c.drawRoundRect(RectF(x-dp(22f)*u,y-dp(26f)*u,x+dp(22f)*u,y+dp(20f)*u),dp(13f)*u,dp(13f)*u,p)
+                }
+            }
+            "knight", "pirate", "soldier" -> {
+                p.color=if(characterId=="pirate") Color.rgb(65,48,63) else Color.rgb(172,181,197)
+                c.drawRoundRect(RectF(x-dp(25f)*u,y-dp(31f)*u,x+dp(25f)*u,y-dp(14f)*u),dp(5f)*u,dp(5f)*u,p)
+                if(characterId=="pirate") {
+                    p.color=Color.WHITE; c.drawCircle(x,y-dp(23f)*u,dp(4f)*u,p)
+                } else {
+                    p.color=Color.rgb(255,210,92); c.drawCircle(x,y-dp(22f)*u,dp(3f)*u,p)
+                }
+            }
+            "robot" -> {
+                p.color=Color.rgb(192,202,219)
+                c.drawRoundRect(RectF(x-dp(24f)*u,y-dp(25f)*u,x+dp(24f)*u,y+dp(20f)*u),dp(8f)*u,dp(8f)*u,p)
+                p.color=shirt; c.drawCircle(x-dp(9f)*u,y-dp(3f)*u,dp(4f)*u,p); c.drawCircle(x+dp(9f)*u,y-dp(3f)*u,dp(4f)*u,p)
+            }
+            else -> Unit
+        }
+    }
+
+    /** Outfit-specific marks keep people, fantasy mascots, snacks and creatures visually distinct. */
+    private fun drawOutfitDetails(c: Canvas, x: Float, top: Float, bottom: Float, u: Float, state: PullState, t: Long) {
+        when (characterId) {
+            "astronaut", "space" -> {
+                p.color=Color.rgb(112,181,222)
+                c.drawCircle(x,top+dp(15f)*u,dp(5f)*u,p)
+                p.color=Color.WHITE; c.drawRoundRect(RectF(x-dp(8f)*u,top+dp(25f)*u,x+dp(8f)*u,top+dp(31f)*u),dp(2f)*u,dp(2f)*u,p)
+            }
+            "princess", "prince", "fairy", "angel", "unicorn" -> {
+                p.color=Color.rgb(255,221,118)
+                val gem=Path().apply { moveTo(x,top+dp(8f)*u); lineTo(x+dp(5f)*u,top+dp(14f)*u); lineTo(x,top+dp(20f)*u); lineTo(x-dp(5f)*u,top+dp(14f)*u); close() }
+                c.drawPath(gem,p)
+            }
+            "ninja", "witch", "wizard", "pirate" -> {
+                p.color=ink; c.drawRoundRect(RectF(x-dp(13f)*u,top+dp(5f)*u,x+dp(13f)*u,top+dp(11f)*u),dp(3f)*u,dp(3f)*u,p)
+            }
+            "bee" -> {
+                p.color=Color.rgb(255,225,94); p.strokeWidth=dp(3f)*u
+                c.drawLine(x-dp(12f)*u,top+dp(16f)*u,x+dp(12f)*u,top+dp(16f)*u,p)
+                c.drawLine(x-dp(12f)*u,top+dp(25f)*u,x+dp(12f)*u,top+dp(25f)*u,p)
+            }
+            "strawberry", "peach", "blueberry", "cookie", "cupcake" -> {
+                p.color=Color.WHITE
+                for (i in -1..1) c.drawCircle(x+dp(i*6f)*u,top+dp(18f)*u,dp(1.6f)*u,p)
+            }
+            "frog", "turtle", "dragon", "axolotl" -> {
+                p.color=Color.argb(130,255,255,255)
+                c.drawOval(RectF(x-dp(10f)*u,top+dp(8f)*u,x+dp(10f)*u,top+dp(27f)*u),p)
+            }
+            "cat", "bunny", "fox", "puppy", "panda", "bear", "koala" -> {
+                p.color=Color.argb(95,255,255,255)
+                c.drawOval(RectF(x-dp(10f)*u,top+dp(8f)*u,x+dp(10f)*u,top+dp(20f)*u),p)
+            }
+            else -> {
+                p.color=Color.argb(150,255,255,255)
+                c.drawCircle(x,top+dp(16f)*u,dp(3f)*u,p)
+            }
+        }
     }
 
     private fun drawEars(c: Canvas, x: Float, y: Float, u: Float) {
