@@ -32,7 +32,7 @@ class MainActivity : Activity() {
     private lateinit var recentText: TextView
     private var query = ""
 
-    override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); render() }
+    override fun onCreate(savedInstanceState: Bundle?) {\n        super.onCreate(savedInstanceState)\n        render()\n        SettingsRepository.restore(this) { if (!isFinishing) render() }\n    }
     override fun onResume() { super.onResume(); if (::root.isInitialized) refreshStatus() }
 
     private fun render() {
@@ -98,7 +98,7 @@ class MainActivity : Activity() {
                 isEnabled = valid
                 setOnClickListener {
                     if (CharacterAssetLoader.validate(definition)) {
-                        prefs.edit().putString("selected_character", definition.id).apply()
+                        saveString("selected_character", definition.id)
                         render()
                     } else {
                         Toast.makeText(this@MainActivity, "This character's animation assets are unavailable.", Toast.LENGTH_LONG).show()
@@ -110,24 +110,24 @@ class MainActivity : Activity() {
         val characterControls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         actionButton(characterControls, "Speed: " + prefs.getString("animation_speed", "normal").orEmpty().replaceFirstChar { it.uppercase() }) {
             val next = when (prefs.getString("animation_speed", "normal")) { "slow" -> "normal"; "normal" -> "fast"; else -> "slow" }
-            prefs.edit().putString("animation_speed", next).apply()
+            saveString("animation_speed", next)
             render()
         }
         actionButton(characterControls, "Size: " + prefs.getString("character_size", "medium").orEmpty().replaceFirstChar { it.uppercase() }) {
             val next = when (prefs.getString("character_size", "medium")) { "small" -> "medium"; "medium" -> "large"; else -> "small" }
-            prefs.edit().putString("character_size", next).apply()
+            saveString("character_size", next)
             render()
         }
         characterCard.addView(characterControls)
         val cycleControls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         actionButton(cycleControls, "Pulls: " + prefs.getInt("pull_cycles", 3)) {
             val next = prefs.getInt("pull_cycles", 3) % 5 + 1
-            prefs.edit().putInt("pull_cycles", next).apply()
+            saveInt("pull_cycles", next)
             render()
         }
         actionButton(cycleControls, "Duration: " + (prefs.getInt("overlay_duration_ms", 5600) / 1000f).let { String.format(java.util.Locale.getDefault(), "%.1fs", it) }) {
             val next = when (prefs.getInt("overlay_duration_ms", 5600)) { 3500 -> 5600; 5600 -> 8000; else -> 3500 }
-            prefs.edit().putInt("overlay_duration_ms", next).apply()
+            saveInt("overlay_duration_ms", next)
             render()
         }
         characterCard.addView(cycleControls)
@@ -201,14 +201,14 @@ class MainActivity : Activity() {
     }
 
     private fun saveSelection(values: Set<String>) {
-        prefs.edit().putStringSet("selected_apps", values.toSet()).apply()
+        val selected = values.toSet()\n        prefs.edit().putStringSet("selected_apps", selected).apply()\n        SettingsRepository.persist(this, "selected_apps", selected)
     }
 
-    private fun addToggle(parent: LinearLayout, label: String, key: String, default: Boolean, invert: Boolean = false) {
+    private fun saveString(key: String, value: String) {\n        prefs.edit().putString(key, value).apply()\n        SettingsRepository.persist(this, key, value)\n    }\n\n    private fun saveInt(key: String, value: Int) {\n        prefs.edit().putInt(key, value).apply()\n        SettingsRepository.persist(this, key, value)\n    }\n\n    private fun saveBoolean(key: String, value: Boolean) {\n        prefs.edit().putBoolean(key, value).apply()\n        SettingsRepository.persist(this, key, value)\n    }\n\n    private fun addToggle(parent: LinearLayout, label: String, key: String, default: Boolean, invert: Boolean = false) {
         val check = CheckBox(this).apply {
             text = label; textSize = 14f; setTextColor(ink)
             isChecked = if (invert) !prefs.getBoolean(key, default) else prefs.getBoolean(key, default)
-            setOnCheckedChangeListener { _, checked -> prefs.edit().putBoolean(key, if (invert) !checked else checked).apply() }
+            setOnCheckedChangeListener { _, checked -> saveBoolean(key, if (invert) !checked else checked) }
         }
         parent.addView(check, LinearLayout.LayoutParams(-1, dp(44)))
     }
