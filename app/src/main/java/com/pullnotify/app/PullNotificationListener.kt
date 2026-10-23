@@ -2,6 +2,7 @@ package com.pullnotify.app
 
 import android.app.Notification
 import android.content.Context
+import android.content.ComponentName
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
@@ -16,6 +17,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 class PullNotificationListener : NotificationListenerService() {
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        try { requestRebind(ComponentName(this, PullNotificationListener::class.java)) } catch (_: Exception) {}
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         sbn ?: return
