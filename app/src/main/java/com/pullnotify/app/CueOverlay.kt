@@ -35,7 +35,7 @@ object CueOverlay {
                 val manager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
                 val density = context.resources.displayMetrics.density
                 fun dp(v: Int) = (v * density).toInt()
-                val characterId = CharacterRegistry.find(prefs.getString("selected_character", "cute")).id
+                val characterId = CharacterRegistry.find(prefs.getString("selected_character", "bunny")).id
                 val speed = when (prefs.getString("animation_speed", "normal")) {
                     "slow" -> .72f
                     "fast" -> 1.42f
