@@ -2,7 +2,7 @@ package com.pullnotify.app
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Typeface
+import android.graphics.Typeface\nimport android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
@@ -79,9 +79,59 @@ class MainActivity : Activity() {
         actionButton(actions, "Preview animated cue") {
             if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(this)) {
                 Toast.makeText(this, "Allow pop-up permission first", Toast.LENGTH_LONG).show()
-            } else CueOverlay.show(this, "PullNotify", "Your preview is working ✨")
+            } else CueOverlay.show(this, "PullNotify", "PREVIEW_FORCE")
         }
         root.addView(actions)
+
+        val characterCard = card()
+        addText(characterCard, "CHOOSE YOUR CHARACTER", 12f, accent, true)
+        addText(characterCard, "Pick the character that grabs the rope and pulls the visual down.", 13f, muted, false)
+        val selectedCharacter = prefs.getString("selected_character", "cute")
+        CharacterRegistry.all.forEach { definition ->
+            val valid = CharacterAssetLoader.validate(definition)
+            val choice = Button(this).apply {
+                text = (if (definition.id == selectedCharacter) "✓  " else "○  ") + definition.displayName + "  ·  " + definition.style
+                isAllCaps = false
+                textSize = 13f
+                setTextColor(if (definition.id == selectedCharacter) Color.WHITE else ink)
+                background = rounded(if (definition.id == selectedCharacter) accent else 0xFFF0EDF9.toInt(), 14)
+                isEnabled = valid
+                setOnClickListener {
+                    if (CharacterAssetLoader.validate(definition)) {
+                        prefs.edit().putString("selected_character", definition.id).apply()
+                        render()
+                    } else {
+                        Toast.makeText(this@MainActivity, "This character's animation assets are unavailable.", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+            characterCard.addView(choice, LinearLayout.LayoutParams(-1, dp(50)).apply { topMargin = dp(5); bottomMargin = dp(5) })
+        }
+        val characterControls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        actionButton(characterControls, "Speed: " + prefs.getString("animation_speed", "normal").orEmpty().replaceFirstChar { it.uppercase() }) {
+            val next = when (prefs.getString("animation_speed", "normal")) { "slow" -> "normal"; "normal" -> "fast"; else -> "slow" }
+            prefs.edit().putString("animation_speed", next).apply()
+            render()
+        }
+        actionButton(characterControls, "Size: " + prefs.getString("character_size", "medium").orEmpty().replaceFirstChar { it.uppercase() }) {
+            val next = when (prefs.getString("character_size", "medium")) { "small" -> "medium"; "medium" -> "large"; else -> "small" }
+            prefs.edit().putString("character_size", next).apply()
+            render()
+        }
+        characterCard.addView(characterControls)
+        val cycleControls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        actionButton(cycleControls, "Pulls: " + prefs.getInt("pull_cycles", 3)) {
+            val next = prefs.getInt("pull_cycles", 3) % 5 + 1
+            prefs.edit().putInt("pull_cycles", next).apply()
+            render()
+        }
+        actionButton(cycleControls, "Duration: " + (prefs.getInt("overlay_duration_ms", 5600) / 1000f).let { String.format(java.util.Locale.getDefault(), "%.1fs", it) }) {
+            val next = when (prefs.getInt("overlay_duration_ms", 5600)) { 3500 -> 5600; 5600 -> 8000; else -> 3500 }
+            prefs.edit().putInt("overlay_duration_ms", next).apply()
+            render()
+        }
+        characterCard.addView(cycleControls)
+        root.addView(characterCard)
 
         val appCard = card()
         addText(appCard, "YOUR APPS", 12f, accent, true)
