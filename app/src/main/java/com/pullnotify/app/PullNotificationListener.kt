@@ -57,7 +57,7 @@ class PullNotificationListener : NotificationListenerService() {
             } catch (_: Exception) {}
         }
         if (prefs.getBoolean("cues_enabled", true) && Build.VERSION.SDK_INT >= 23 && android.provider.Settings.canDrawOverlays(this)) {
-            CueOverlay.show(this, appLabel, "New notification · $time")
+            CueOverlay.show(this, appLabel, "New notification · $time", sbn.notification.contentIntent)
         }
         sendBroadcast(android.content.Intent("com.pullnotify.app.ACTIVITY_UPDATED").setPackage(packageName))
     }
