@@ -2,7 +2,8 @@ package com.pullnotify.app
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Typeface\nimport android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
@@ -32,7 +33,11 @@ class MainActivity : Activity() {
     private lateinit var recentText: TextView
     private var query = ""
 
-    override fun onCreate(savedInstanceState: Bundle?) {\n        super.onCreate(savedInstanceState)\n        render()\n        SettingsRepository.restore(this) { if (!isFinishing) render() }\n    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        render()
+        SettingsRepository.restore(this) { if (!isFinishing) render() }
+    }
     override fun onResume() { super.onResume(); if (::root.isInitialized) refreshStatus() }
 
     private fun render() {
@@ -201,10 +206,27 @@ class MainActivity : Activity() {
     }
 
     private fun saveSelection(values: Set<String>) {
-        val selected = values.toSet()\n        prefs.edit().putStringSet("selected_apps", selected).apply()\n        SettingsRepository.persist(this, "selected_apps", selected)
+        val selected = values.toSet()
+        prefs.edit().putStringSet("selected_apps", selected).apply()
+        SettingsRepository.persist(this, "selected_apps", selected)
     }
 
-    private fun saveString(key: String, value: String) {\n        prefs.edit().putString(key, value).apply()\n        SettingsRepository.persist(this, key, value)\n    }\n\n    private fun saveInt(key: String, value: Int) {\n        prefs.edit().putInt(key, value).apply()\n        SettingsRepository.persist(this, key, value)\n    }\n\n    private fun saveBoolean(key: String, value: Boolean) {\n        prefs.edit().putBoolean(key, value).apply()\n        SettingsRepository.persist(this, key, value)\n    }\n\n    private fun addToggle(parent: LinearLayout, label: String, key: String, default: Boolean, invert: Boolean = false) {
+    private fun saveString(key: String, value: String) {
+        prefs.edit().putString(key, value).apply()
+        SettingsRepository.persist(this, key, value)
+    }
+
+    private fun saveInt(key: String, value: Int) {
+        prefs.edit().putInt(key, value).apply()
+        SettingsRepository.persist(this, key, value)
+    }
+
+    private fun saveBoolean(key: String, value: Boolean) {
+        prefs.edit().putBoolean(key, value).apply()
+        SettingsRepository.persist(this, key, value)
+    }
+
+    private fun addToggle(parent: LinearLayout, label: String, key: String, default: Boolean, invert: Boolean = false) {
         val check = CheckBox(this).apply {
             text = label; textSize = 14f; setTextColor(ink)
             isChecked = if (invert) !prefs.getBoolean(key, default) else prefs.getBoolean(key, default)
