@@ -12,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 private val Context.pullNotifyDataStore by preferencesDataStore(name = "pullnotify_settings")
 
@@ -58,7 +57,7 @@ object SettingsRepository {
             } catch (_: Exception) {
                 // Missing or unreadable DataStore data falls back to the existing local settings.
             }
-            withContext(Dispatchers.Main) { onComplete() }
+            android.os.Handler(android.os.Looper.getMainLooper()).post { onComplete() }
         }
     }
 }
