@@ -91,7 +91,7 @@ class MainActivity : Activity() {
         val characterCard = card()
         addText(characterCard, "CHOOSE YOUR CHARACTER", 12f, accent, true)
         addText(characterCard, "Pick the character that grabs the rope and pulls the visual down.", 13f, muted, false)
-        val selectedCharacter = prefs.getString("selected_character", "cute")
+        val selectedCharacter = prefs.getString("selected_character", "bunny")
         CharacterRegistry.all.forEach { definition ->
             val valid = CharacterAssetLoader.validate(definition)
             val choice = Button(this).apply {
