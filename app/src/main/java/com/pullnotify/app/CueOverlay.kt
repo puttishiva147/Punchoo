@@ -62,7 +62,7 @@ object CueOverlay {
                 ).apply {
                     gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
                     x = 0
-                    y = dp(42)
+                    y = 0
                     softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
                 }
                 manager.addView(renderer, params)
