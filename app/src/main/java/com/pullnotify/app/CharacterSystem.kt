@@ -180,6 +180,7 @@ class CharacterRendererView(
         val u = dp(1f) * sizeFactor.coerceIn(.65f, 1.45f) * .76f
         val enter = 1f - smooth(elapsed / (420f / max(.35f, speed)))
         val phase = ((elapsed / (1050f / max(.35f, speed))) % 1f)
+        val cutout = if (android.os.Build.VERSION.SDK_INT >= 28) rootWindowInsets?.displayCutout?.boundingRects?.firstOrNull() else null
         val exertion = when (state) {
             PullState.PULL -> smooth(phase / .58f)
             PullState.STRUGGLE -> .94f + .04f * sin(elapsed / 25.0).toFloat()
@@ -212,7 +213,6 @@ class CharacterRendererView(
         val handY = floor - dp(103f - lean * .65f) * u
         val handLX = shoulderX + dp(22f) * u
         val handRX = shoulderX + dp(37f) * u
-        val cutout = if (android.os.Build.VERSION.SDK_INT >= 28) rootWindowInsets?.displayCutout?.boundingRects?.firstOrNull() else null
         // Align the rope with the physical camera cutout when Android exposes it.
         val ropeX = cutout?.centerX()?.toFloat()?.coerceIn(dp(24f), w-dp(24f)) ?: (w * .5f)
         val cardW = min(dp(174f), w * .43f)
