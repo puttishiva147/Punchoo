@@ -24,6 +24,7 @@ class PullNotificationListener : NotificationListenerService() {
         if (prefs.getBoolean("paused", false)) return
         val selected = prefs.getStringSet("selected_apps", emptySet()) ?: emptySet()
         if (!selected.contains(sbn.packageName)) return
+        if (!NotificationFilter.shouldHandle(sbn)) return
 
         val appLabel = try {
             packageManager.getApplicationLabel(packageManager.getApplicationInfo(sbn.packageName, 0)).toString()
@@ -43,7 +44,7 @@ class PullNotificationListener : NotificationListenerService() {
             } catch (_: Exception) {}
         }
         if (prefs.getBoolean("sound_enabled", false)) {
-            try { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 65).startTone(ToneGenerator.TONE_PROP_BEEP, 100) } catch (_: Exception) {}
+            try {\n                val tone = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 65)\n                tone.startTone(ToneGenerator.TONE_PROP_BEEP, 100)\n                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ tone.release() }, 180L)\n            } catch (_: Exception) {}
         }
         if (prefs.getBoolean("cues_enabled", true) && Build.VERSION.SDK_INT >= 23 && android.provider.Settings.canDrawOverlays(this)) {
             CueOverlay.show(this, appLabel, "New notification · $time")
