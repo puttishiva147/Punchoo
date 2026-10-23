@@ -44,7 +44,11 @@ class PullNotificationListener : NotificationListenerService() {
             } catch (_: Exception) {}
         }
         if (prefs.getBoolean("sound_enabled", false)) {
-            try {\n                val tone = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 65)\n                tone.startTone(ToneGenerator.TONE_PROP_BEEP, 100)\n                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ tone.release() }, 180L)\n            } catch (_: Exception) {}
+            try {
+                val tone = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 65)
+                tone.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ tone.release() }, 180L)
+            } catch (_: Exception) {}
         }
         if (prefs.getBoolean("cues_enabled", true) && Build.VERSION.SDK_INT >= 23 && android.provider.Settings.canDrawOverlays(this)) {
             CueOverlay.show(this, appLabel, "New notification · $time")
