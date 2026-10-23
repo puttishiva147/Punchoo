@@ -15,7 +15,9 @@ object CueOverlay {
     private var currentView: View? = null
     private var currentManager: WindowManager? = null
     private var dismissTask: Runnable? = null
-    private data class OverlayRequest(val context: Context, val title: String, val subtitle: String)\n    private val pending = java.util.ArrayDeque<OverlayRequest>()\n
+    private data class OverlayRequest(val context: Context, val title: String, val subtitle: String)
+    private val pending = java.util.ArrayDeque<OverlayRequest>()
+
     fun show(context: Context, title: String, subtitle: String) {
         if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(context)) return
         handler.post {
@@ -68,7 +70,11 @@ object CueOverlay {
                         renderer.animate().alpha(0f).setDuration(170).withEndAction {
                             try { manager.removeView(renderer) } catch (_: Exception) {}
                             renderer.dispose()
-                            if (currentView === renderer) {\n                                currentView = null; currentManager = null; dismissTask = null\n                                val next = if (pending.isEmpty()) null else pending.removeFirst()\n                                if (next != null) show(next.context, next.title, next.subtitle)\n                            }
+                            if (currentView === renderer) {
+                                currentView = null; currentManager = null; dismissTask = null
+                                val next = if (pending.isEmpty()) null else pending.removeFirst()
+                                if (next != null) show(next.context, next.title, next.subtitle)
+                            }
                         }.start()
                     }
                 }
