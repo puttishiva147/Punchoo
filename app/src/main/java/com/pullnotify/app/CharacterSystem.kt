@@ -177,7 +177,7 @@ class CharacterRendererView(
 
     private fun drawScene(c: Canvas, elapsed: Long, state: PullState) {
         val w = width.toFloat(); val h = height.toFloat()
-        val u = dp(1f) * sizeFactor.coerceIn(.65f, 1.45f)
+        val u = dp(1f) * sizeFactor.coerceIn(.65f, 1.45f) * .76f
         val enter = 1f - smooth(elapsed / (420f / max(.35f, speed)))
         val phase = ((elapsed / (1050f / max(.35f, speed))) % 1f)
         val exertion = when (state) {
@@ -195,8 +195,9 @@ class CharacterRendererView(
             PullState.PULL -> dp(2f * sin(elapsed / 65.0).toFloat())
             else -> 0f
         }
-        val x = w * .31f + dp(78f) * enter + shake
-        val floor = h * .80f + bounce
+        // Tiny mascot hangs just below the camera cutout, with little dangling legs.
+        val x = (cutout?.centerX()?.toFloat() ?: (w * .5f)) - dp(20f) + dp(30f) * enter + shake
+        val floor = dp(166f) + bounce
         val lean = when (state) {
             PullState.PULL -> 18f * exertion
             PullState.STRUGGLE -> 24f
@@ -214,9 +215,9 @@ class CharacterRendererView(
         val cutout = if (android.os.Build.VERSION.SDK_INT >= 28) rootWindowInsets?.displayCutout?.boundingRects?.firstOrNull() else null
         // Align the rope with the physical camera cutout when Android exposes it.
         val ropeX = cutout?.centerX()?.toFloat()?.coerceIn(dp(24f), w-dp(24f)) ?: (w * .5f)
-        val cardW = min(dp(194f), w * .48f)
-        val cardH = dp(57f)
-        val cardX = min(w - cardW - dp(8f), w * .49f)
+        val cardW = min(dp(174f), w * .43f)
+        val cardH = dp(49f)
+        val cardX = min(w - cardW - dp(8f), w * .57f)
         val travel = when (state) {
             PullState.SUCCESS -> dp(38f)
             PullState.PULL -> dp(27f * exertion)
@@ -230,15 +231,15 @@ class CharacterRendererView(
         p.color = paper
         c.drawRoundRect(cardX, cardY, cardX + cardW, cardY + cardH, dp(16f), dp(16f), p)
         p.color = shirt
-        c.drawRoundRect(cardX + dp(8f), cardY + dp(8f), cardX + dp(30f), cardY + dp(30f), dp(8f), dp(8f), p)
+        c.drawRoundRect(cardX + dp(7f), cardY + dp(7f), cardX + dp(27f), cardY + dp(27f), dp(7f), dp(7f), p)
         p.color = Color.WHITE; p.textSize = dp(14f); p.textAlign = Paint.Align.CENTER
         p.typeface = android.graphics.Typeface.DEFAULT_BOLD
-        c.drawText("✦", cardX + dp(19f), cardY + dp(24f), p)
+        c.drawText("✦", cardX + dp(17f), cardY + dp(22f), p)
         p.textAlign = Paint.Align.LEFT
-        p.color = ink; p.textSize = dp(11f)
-        c.drawText(if (appLabel.length > 22) appLabel.take(20) + "…" else appLabel, cardX + dp(37f), cardY + dp(20f), p)
-        p.color = Color.rgb(125, 111, 126); p.textSize = dp(9f)
-        c.drawText(if (state == PullState.SUCCESS) "You did it! ✨" else "A little notification", cardX + dp(37f), cardY + dp(38f), p)
+        p.color = ink; p.textSize = dp(10f)
+        c.drawText(if (appLabel.length > 18) appLabel.take(16) + "…" else appLabel, cardX + dp(33f), cardY + dp(18f), p)
+        p.color = Color.rgb(125, 111, 126); p.textSize = dp(8f)
+        c.drawText(if (state == PullState.SUCCESS) "Yay! ✨" else "A little ping", cardX + dp(33f), cardY + dp(36f), p)
 
         // Rope follows the character's actual grip, flexing when tension rises.
         p.color = Color.rgb(151, 115, 139); p.style = Paint.Style.STROKE
