@@ -169,7 +169,7 @@ class MainActivity : Activity() {
         addToggle(settingsCard, "Animated cue pop-ups", "cues_enabled", true)
         addToggle(settingsCard, "Vibrate on selected notifications", "vibrate_enabled", false)
         addToggle(settingsCard, "Play cue sound", "sound_enabled", false)
-        addToggle(settingsCard, "Pause all processing", "paused", false, invert = true)
+        addToggle(settingsCard, "Pause all processing", "paused", false)
         root.addView(settingsCard)
         addText(root, "PRIVACY BY DESIGN", 12f, accent, true, 18)
         addText(root, "Only the app name and time are kept in a short on-device activity list. Notification message content is not read, stored, or sent to a server. Android may restrict pop-ups in the background.", 12f, muted, false)
