@@ -32,23 +32,26 @@ data class CharacterDefinition(
 
 /** 60 distinct character identities. All are lightweight vector characters, so no sprite downloads are required. */
 object CharacterRegistry {
+    // Modern character catalogue; IDs with existing drawing support retain their specialized details.
     private val entries = listOf(
-        "Mochi Bunny" to "bunny", "Peach Cat" to "cat", "Pudding Bear" to "bear", "Tiny Fox" to "fox",
-        "Cloud Puppy" to "puppy", "Panda Bean" to "panda", "Red Panda" to "redpanda", "Baby Dragon" to "dragon",
-        "Star Fairy" to "fairy", "Forest Elf" to "elf", "Little Witch" to "witch", "Moon Wizard" to "wizard",
-        "Sunny Chick" to "chick", "Duckling" to "duck", "Penguin Pal" to "penguin", "Frog Prince" to "frog",
-        "Mint Turtle" to "turtle", "Happy Axolotl" to "axolotl", "Ocean Otter" to "otter", "Sleepy Sloth" to "sloth",
-        "Tiny Tiger" to "tiger", "Pocket Lion" to "lion", "Baby Deer" to "deer", "Koala Cub" to "koala",
-        "Lambkin" to "lamb", "Hedgehog" to "hedgehog", "Little Mouse" to "mouse", "Raccoon Bandit" to "raccoon",
-        "Bee Buddy" to "bee", "Ladybug" to "ladybug", "Butterfly" to "butterfly", "Daisy Sprite" to "flower",
-        "Strawberry Kid" to "strawberry", "Peach Sprite" to "peach", "Blueberry Pal" to "blueberry", "Mushroom Folk" to "mushroom",
-        "Cocoa Cookie" to "cookie", "Jellybean" to "jelly", "Marshmallow" to "marshmallow", "Cupcake Cutie" to "cupcake",
-        "Little Astronaut" to "astronaut", "Space Explorer" to "space", "Cloud Angel" to "angel", "Tiny Devil" to "devil",
-        "Mermaid Pal" to "mermaid", "Ocean Sprite" to "ocean", "Pirate Pup" to "pirate", "Knight Cub" to "knight",
-        "Royal Prince" to "prince", "Royal Princess" to "princess", "K-pop Star" to "star", "Skater Kid" to "skater",
-        "Garden Gnome" to "gnome", "Toy Soldier" to "soldier", "Paper Doll" to "doll", "Pixel Adventurer" to "pixel",
-        "Ink Doodle" to "doodle", "Mini Stick Hero" to "stickman", "Chibi Ninja" to "ninja", "Robot Pal" to "robot",
-        "Golden Phoenix" to "phoenix", "Rainbow Unicorn" to "unicorn"
+        "Casual Boy" to "casualboy", "Hoodie Girl" to "hoodiegirl", "Glasses Boy" to "glassesboy",
+        "Gamer Girl" to "gamergirl", "Suit Boy" to "suitboy", "Streetwear" to "streetwear",
+        "Sporty Girl" to "sportygirl", "Detective" to "detective", "Ninja" to "ninja",
+        "Samurai" to "samurai", "Royal" to "prince", "Cyber Girl" to "cybergirl",
+        "Angel" to "angel", "Devil" to "devil", "Witch" to "witch", "Elf" to "elf",
+        "Astronaut" to "astronaut", "Pilot" to "pilot", "Soldier" to "soldier", "Cowboy" to "cowboy",
+        "King" to "king", "Pirate" to "pirate", "White Cat" to "cat", "Black Cat" to "blackcat",
+        "Wolf" to "wolf", "Dog" to "puppy", "Husky" to "husky", "Shiba Inu" to "shiba",
+        "Panda" to "panda", "Red Panda" to "redpanda", "Tiger" to "tiger", "Snow Leopard" to "leopard",
+        "Lion" to "lion", "Fox" to "fox", "Bunny" to "bunny", "Otter" to "otter",
+        "Raccoon" to "raccoon", "Dragon" to "dragon", "Phoenix" to "phoenix", "Owl" to "owl",
+        "Shark" to "shark", "Dolphin" to "dolphin", "Alien" to "alien", "Robot" to "robot",
+        "Ghost" to "ghost", "Slime" to "slime", "Fairy" to "fairy", "Mermaid" to "mermaid",
+        "Royal Princess" to "princess", "Skater" to "skater", "K-pop Star" to "star",
+        "Moon Wizard" to "wizard", "Golden Phoenix" to "phoenix2", "Black Panther" to "panther",
+        "White Tiger" to "whitetiger", "Cyber Boy" to "cyberboy", "Office Girl" to "officegirl",
+        "Gamer Boy" to "gamerboy", "Royal Guard" to "royalguard", "Raven" to "raven",
+        "Neon Runner" to "neonrunner", "Space Explorer" to "space"
     )
     val all: List<CharacterDefinition> = entries.mapIndexed { index, pair ->
         val id = pair.second
@@ -58,8 +61,9 @@ object CharacterRegistry {
             style = when (id) {
                 "pixel" -> "Pixel art"
                 "stickman" -> "Hand-drawn line art"
-                "robot" -> "Friendly toy mascot"
-                else -> "Expressive chibi cartoon"
+                "robot" -> "Futuristic synthetic"
+                in setOf("casualboy", "hoodiegirl", "glassesboy", "gamergirl", "suitboy", "streetwear", "sportygirl", "detective", "samurai", "cybergirl", "pilot", "cowboy", "king", "blackcat", "wolf", "husky", "shiba", "leopard", "owl", "shark", "dolphin", "alien", "ghost", "slime", "cyberboy", "officegirl", "gamerboy", "royalguard", "raven", "neonrunner", "panther", "whitetiger") -> "Stylized CGI-inspired"
+                else -> "Stylish character"
             },
             previewAsset = "procedural:$id",
             idleAnimation = "${id}_breathe_blink",
@@ -189,22 +193,35 @@ class CharacterRendererView(
             else -> 0f
         }
         val shake = if (state == PullState.STRUGGLE) dp(2.3f * sin(elapsed / 22.0).toFloat()) else 0f
+        // Each character has a distinct motion signature instead of sharing one identical loop.
+        val motionSeed = (characterId.hashCode() and 0x7fffffff) % 7
+        val motionWave = sin(elapsed / (165.0 + motionSeed * 31.0)).toFloat()
         val bounce = when (state) {
-            PullState.IDLE -> dp(2.5f * sin(elapsed / 250.0).toFloat())
-            PullState.ENTER -> dp(7f * sin((1f-enter) * Math.PI).toFloat())
-            PullState.SUCCESS -> dp(-7f * sin(elapsed / 55.0).toFloat())
-            PullState.PULL -> dp(2f * sin(elapsed / 65.0).toFloat())
+            PullState.IDLE -> dp((1.2f + motionSeed * .32f) * motionWave)
+            PullState.ENTER -> dp((5f + motionSeed * .6f) * sin((1f-enter) * Math.PI).toFloat())
+            PullState.SUCCESS -> dp(-(4f + motionSeed * .7f) * sin(elapsed / (42.0 + motionSeed * 5.0)).toFloat())
+            PullState.PULL -> dp((1.4f + motionSeed * .25f) * sin(elapsed / (48.0 + motionSeed * 7.0)).toFloat())
+            PullState.STRUGGLE -> dp(motionWave * (1.5f + motionSeed * .35f))
             else -> 0f
         }
         // Tiny mascot hangs just below the camera cutout, with little dangling legs.
         val x = (cutout?.centerX()?.toFloat() ?: (w * .5f)) - dp(20f) + dp(30f) * enter + shake
         val floor = dp(166f) + bounce
+        val styleMotion = when (motionSeed) {
+            0 -> 1.25f
+            1 -> .72f
+            2 -> 1.55f
+            3 -> .9f
+            4 -> 1.35f
+            5 -> .8f
+            else -> 1.1f
+        }
         val lean = when (state) {
-            PullState.PULL -> 18f * exertion
-            PullState.STRUGGLE -> 24f
-            PullState.RELEASE -> -8f * exertion
-            PullState.SUCCESS -> -5f
-            else -> 0f
+            PullState.PULL -> 18f * exertion * styleMotion
+            PullState.STRUGGLE -> 24f * styleMotion
+            PullState.RELEASE -> -8f * exertion * styleMotion
+            PullState.SUCCESS -> -5f * styleMotion
+            else -> if (state == PullState.IDLE) 2.4f * motionWave else 0f
         }
         val headX = x + dp(lean * .48f) * u
         val headY = floor - dp(85f) * u + bounce * .25f
