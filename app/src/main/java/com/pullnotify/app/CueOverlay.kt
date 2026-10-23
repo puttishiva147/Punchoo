@@ -21,6 +21,10 @@ object CueOverlay {
     fun show(context: Context, title: String, subtitle: String) {
         if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(context)) return
         handler.post {
+            if (currentView != null) {
+                if (pending.size < 3) pending.addLast(OverlayRequest(context.applicationContext, title, subtitle))
+                return@post
+            }
             val prefs = context.getSharedPreferences("pullnotify", Context.MODE_PRIVATE)
             if (!prefs.getBoolean("cues_enabled", true) && subtitle != "PREVIEW_FORCE") return@post
             try {
