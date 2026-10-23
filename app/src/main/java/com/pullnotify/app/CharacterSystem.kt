@@ -127,7 +127,7 @@ class CharacterRendererView(
         if (closed) return
         val elapsed = ((SystemClock.uptimeMillis() - startTime) * speed.coerceIn(.35f, 2.5f)).toLong()
         val state = stateAt(elapsed)
-        val end = (350 + 520 + 920 * pullCycles.coerceIn(1, 5) + 520 + 420) / max(.35f, speed)
+        val end = ((350 + 520 + 920 * pullCycles.coerceIn(1, 5) + 520 + 420) / max(.35f, speed)).toLong()
         drawScene(canvas, elapsed, state)
         if (elapsed < end && state != PullState.IDLE) postInvalidateDelayed(30)
     }
@@ -309,6 +309,6 @@ class CharacterRendererView(
 
     fun dispose() {
         closed = true
-        removeCallbacks(null)
+        animate().cancel()\n        invalidate()
     }
 }
